@@ -88,43 +88,35 @@ class Notification < ApplicationRecord
 
   # rubocop:disable Metrics/MethodLength
   def push_message_title
-    notification_title_map = {
-      'conversation_creation' => 'notifications.notification_title.conversation_creation',
-      'conversation_assignment' => 'notifications.notification_title.conversation_assignment',
-      'assigned_conversation_new_message' => 'notifications.notification_title.assigned_conversation_new_message',
-      'participating_conversation_new_message' => 'notifications.notification_title.assigned_conversation_new_message',
-      'conversation_mention' => 'notifications.notification_title.conversation_mention',
-      'sla_missed_first_response' => 'notifications.notification_title.sla_missed_first_response',
-      'sla_missed_next_response' => 'notifications.notification_title.sla_missed_next_response',
-      'sla_missed_resolution' => 'notifications.notification_title.sla_missed_resolution'
-    }
-
-    i18n_key = notification_title_map[notification_type]
-    return '' unless i18n_key
-
-    if notification_type == 'conversation_creation'
-      I18n.t(i18n_key, display_id: conversation.display_id, inbox_name: primary_actor.inbox.name)
-    elsif %w[conversation_assignment assigned_conversation_new_message participating_conversation_new_message
-             conversation_mention].include?(notification_type)
-      I18n.t(i18n_key, display_id: conversation.display_id)
-    else
-      I18n.t(i18n_key, display_id: primary_actor.display_id)
-    end
+  case notification_type
+  when 'assigned_conversation_new_message', 'participating_conversation_new_message', 'conversation_creation'
+    sender_name = secondary_actor&.sender&.name || primary_actor&.meta&.dig('sender', 'name') || 'Pengunjung'
+    
+    # Ambil teks pesan dari secondary_actor atau pesan terakhir
+    msg = secondary_actor&.content || primary_actor&.messages&.last&.content || ''
+    clean_msg = transform_user_mention_content(msg.truncate(60))
+    
+    # Format: Nama Pengirim di baris 1, Pesan di baris 2 (tanpa ID percakapan)
+    "#{sender_name}\n#{clean_msg}"
+  when 'conversation_assignment'
+    "Percakapan telah ditugaskan ke Anda"
+  else
+    "Notifikasi Baru"
   end
-  # rubocop:enable Metrics/MethodLength
+end
 
-  def push_message_body
-    case notification_type
-    when 'conversation_creation', 'sla_missed_first_response'
-      message_body(conversation.messages.first)
-    when 'assigned_conversation_new_message', 'participating_conversation_new_message', 'conversation_mention'
-      message_body(secondary_actor)
-    when 'conversation_assignment', 'sla_missed_next_response', 'sla_missed_resolution'
-      message_body((conversation.messages.incoming.last || conversation.messages.outgoing.last))
-    else
-      ''
-    end
+def push_message_body
+  case notification_type
+  when 'conversation_creation', 'sla_missed_first_response'
+    message_content(conversation.messages.first)
+  when 'assigned_conversation_new_message', 'participating_conversation_new_message', 'conversation_mention'
+    message_content(secondary_actor)
+  when 'conversation_assignment', 'sla_missed_next_response', 'sla_missed_resolution'
+    message_content((conversation.messages.incoming.last || conversation.messages.outgoing.last))
+  else
+    ''
   end
+end
 
   def conversation
     primary_actor
