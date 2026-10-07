@@ -42,14 +42,21 @@ Rails.application.routes.draw do
   get '/robots.txt', to: 'robots#show', format: false
   get '/api', to: 'api#index'
   namespace :api, defaults: { format: 'json' } do
-    namespace :v1 do
-      # ----------------------------------
-      # start of account scoped api routes
-      resources :accounts, only: [:create, :show, :update] do
-        member do
-          post :update_active_at
-          get :cache_keys
-        end
+  namespace :v1 do
+
+    namespace :widget do
+      post 'guest-push-subscriptions',
+           to: 'guest_push_subscriptions#create'
+    end
+
+    # ----------------------------------
+    # start of account scoped api routes
+    resources :accounts, only: [:create, :show, :update] do
+      member do
+        post :update_active_at
+        get :cache_keys
+      end
+
 
         scope module: :accounts do
           if ChatwootApp.enterprise?

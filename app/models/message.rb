@@ -137,6 +137,7 @@ class Message < ApplicationRecord
   has_many :notifications, as: :primary_actor, dependent: :destroy_async
 
   after_create_commit :execute_after_create_commit_callbacks
+  after_create_commit :enqueue_guest_push_notification
 
   after_update_commit :dispatch_update_event
   after_commit :reindex_for_search, if: :should_index?, on: [:create, :update]
@@ -291,6 +292,13 @@ class Message < ApplicationRecord
   end
 
   private
+
+  def enqueue_guest_push_notification
+  return unless message_type_before_type_cast == 1
+  return if private?
+
+  GuestPushNotificationJob.perform_later(id)
+end
 
   def prevent_message_flooding
     # Added this to cover the validation specs in messages
