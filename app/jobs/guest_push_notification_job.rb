@@ -25,9 +25,9 @@ class GuestPushNotificationJob < ApplicationJob
     payload = {
       title: 'Pesan baru dari Cicana',
       body: message.content.to_s,
-      icon: 'https://customer.cicana.co/favicon.ico',
+      icon: 'https://cicana.co/wp-content/uploads/2024/04/LOGO-CICANA.png',
       tag: "cicana-message-#{message.id}",
-      url: 'https://customer.cicana.co/'
+      url: 'https://cicana.co/'
     }
 
     WebPush.payload_send(

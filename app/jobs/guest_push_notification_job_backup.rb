@@ -26,7 +26,7 @@ class GuestPushNotificationJob < ApplicationJob
       title: 'Pesan baru dari Cicana',
       body: message.content.to_s,
       icon: 'https://customer.cicana.co/favicon.ico',
-      tag: "cicana-conversation-#{message.conversation_id}",
+      tag: "cicana-message-#{message.id}",
       url: 'https://customer.cicana.co/'
     }
 
